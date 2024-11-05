@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+<h6>@paxxa.be on discord<h6/>
+</body>
+<script>
+window.onload = function() {
+setTimeout(function() {
+alert("oh hi! a new visitor!");
+alert("most of the time, ok is for yes, and cancel for no!");
+alert("when answering prompts, please do not use capital letters and dont use punctuation marks!");
+var name = prompt("What is your name?");
+/* no name entered*/ if (name === "") {
+alert("you dont have a name? thats fine!");
+alert("ill just call you nada.");
+var name = "nada";
+};
+/*cancel when asked name*/if (name === "null") {
+ var isReasonNoName = confirm("why did you click cancel? is there a reason i cant know your name?");
+/**/  if (isReasonNoName) {
+  prompt("whats the reason then?");
+  alert("fine then. ill just call you nada.");
+  var name = "nada";
+}} else {
+alert("hi" + " " + name + "!");
+};
+/*ask for extra questions*/var isOkay = confirm("do you mind if i ask a few questions? i promise itll be quick");
+/*if allows to ask extra questions*/if (isOkay) {
+    var age = prompt("how old are you?");
+	if (age < 18) {
+    alert("you are younger than most visitors... you should be careful");
+} else if (age > 60) {
+    alert("you’ve lived a long time.");
+};
+	var city = prompt("in wich town or city do you live?");
+	confirm("are you sure you live in " + city + "?");
+	alert(city + "... sounds like a cool place!");
+} else {
+    alert("its okay, ill find out on my own.");
+};
+/*saving info*/setTimeout(function() {
+    alert("info saved. we can continue.");
+	var isAlone = confirm(name + ", " + "are you alone?");
+ if (isAlone) {
+ setTimeout(function() {
+    alert("are you sure?");
+}, 2000);
+ } else {
+  alert("thats correct because i am here!");
+  };
+}, 2000);
+
+}, 500);
+};
+</script>
+
+</html>
