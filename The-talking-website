@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
-
+<meta charset="utf-8">
+ <title>webbie</title>
 <body>
 <h6>@paxxa.be on discord</h6>
 <h3>Friendship Level: <span id="friendship-level">stranger</span></h3> 
-
 </body>
 <script>
 
@@ -15,8 +15,14 @@ function delayAction(ms, action) {
 window.onload = function() {
     setTimeout(function() {
         let friendshipLevel = "stranger";
-
+		
+        var websiteName = prompt("choose a name for your site. leave blank for webbie. (default)");
+		 if (websiteName === "" || websiteName === null) {
+		 websiteName = "webbie";
+		 }
+		document.title = websiteName;
         alert("oh hi! a new visitor!");
+		alert("my name is " + websiteName + ".");
         alert("most of the time, ok is for yes, and cancel for no!");
         alert("when answering prompts, please do not use capital letters and dont use punctuation marks!");
 
@@ -76,7 +82,7 @@ window.onload = function() {
                     alert("thats correct because i am here!");
                 };
 
-                delayAction(8000, function() {
+                delayAction(5000, function() {
                     var favouriteAnimal = prompt("say " + name + ", what's your favourite animal?");
                     
                     if (favouriteAnimal === "polar bear" || favouriteAnimal === "a polar bear") {
