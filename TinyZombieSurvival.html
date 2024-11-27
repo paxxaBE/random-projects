@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tiny zombie survival</title>
+  <style>
+    #score {
+      margin: 10px 25px 10px 25px;
+      text-align: center;
+      border: solid white 2px;
+      color: white;
+      padding: 10px 50px 10px 50px;
+      align: center;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: darkGrey;
+    }
+
+    #square {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-color: red;
+      top: 100px;
+      left: 100px;
+      border: solid white 1px;
+    }
+
+    .bullet {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50%;
+    }
+
+    .zombie {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background-color: green;
+      border-radius: 50%;
+    }
+
+#titleContainer {
+  display: flex;
+  align-items: center; /* Vertically align title and version */
+  justify-content: center; /* Horizontally center the title and version together */
+}
+
+#titleGame {
+  color: green;
+  margin: 0; /* Remove default margin */
+}
+
+h3 {
+  color: lightGreen;
+  margin-left: 10px; /* Add space between title and version */
+}
+
+#startIN {
+  color: white;
+  text-align: center;
+  margin-top: 10px; /* Add space between title and start instructions */
+}
+
+
+    /* Health Bar Styles - Updated to Top Center */
+    #healthBarContainer {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 30px;
+      background-color: #444;
+      border-radius: 10px;
+      border: solid 2px white;
+    }
+
+    #healthBar {
+      height: 100%;
+      width: 100%;
+      background-color: red;
+      border-radius: 10px;
+    }
+
+    /* Wave Display */
+    #waveDisplay {
+      color: white;
+      font-size: 24px;
+      position: absolute;
+      top: 10px;
+      right: 25px;
+    }
+
+    /* Upgrade Menu Styles */
+    #upgradeMenu {
+      position: fixed;
+      top: 80px;
+      left: 20px;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      color: white;
+    }
+
+    #upgradeMenu button {
+      background-color: green;
+      border: none;
+      color: white;
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+
+    #upgradeMenu button:hover {
+      background-color: darkgreen;
+    }
+	
+	 #playerName {
+      color: white;
+      position: absolute;
+      top: 70px;
+      left: 100px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+	
+	    .bigZombie {
+      position: absolute;
+      width: 200px; 
+      height: 200px;
+      background-image: url('https://preview.redd.it/if-goku-gets-pregnant-by-broly-would-their-baby-have-the-v0-uip4dsxdgqac1.jpeg?width=1080&crop=smart&auto=webp&s=d4ea6b181b6045ae070143748502d1bfbe0b544a'); 
+      background-size: cover;
+      background-position: center;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div id="square"></div>
+  <p>coins: <span id="score">0</span></p>
+ <div id="titleContainer">
+  <h1 id="titleGame">Tiny zombie survival</h1>
+  <h3>V0.7</h3>
+</div>
+<h5 id="startIN">press P twice to start<br>press E to open upgrades<br>press p to pause</h5>
+
+  <!-- Health Bar HTML -->
+  <div id="healthBarContainer">
+    <div id="healthBar"></div>
+  </div>
+
+  <!-- Wave Display -->
+  <div id="waveDisplay">Wave: 1</div>
+
+  <!-- Upgrade Menu -->
+  <div id="upgradeMenu">
+    <h3>Upgrades</h3>
+    <button id="speedUpgrade">Speed +1 | 100c</button>
+    <button id="shootUpgrade">Faster Shooting | 200c</button>
+    <button id="damageUpgrade">Damage +1 | 200c</button>
+    <button id="healthUpgrade">Health Regen | 500c</button>
+	<button id="zombspeedUpgrade">Zombie speed -1 | 100c</button>
+  </div>
+  
+ <div id="playerName"></div>
+
+  <script>
+    const square = document.getElementById('square');
+    const healthBar = document.getElementById('healthBar');
+    const waveDisplay = document.getElementById('waveDisplay');
+    const scoreDisplay = document.getElementById('score');
+    const speedUpgradeButton = document.getElementById('speedUpgrade');
+    const shootUpgradeButton = document.getElementById('shootUpgrade');
+    const damageUpgradeButton = document.getElementById('damageUpgrade');
+    const healthUpgradeButton = document.getElementById('healthUpgrade');
+	const zombspeedUpgradeButton = document.getElementById('zombspeedUpgrade');
+
+    let squareX = 100;
+    let squareY = 100;
+    let speed = 4;
+    let shootCooldown = 300; // Initial shoot cooldown
+    let damage = 1;  // Initial bullet damage
+    let playerHealth = 100;
+    const maxHealth = 100;
+    let score = 0;
+    let wave = 1;
+    var spawnInterval = 1500; // Initial spawn interval for zombies (2 seconds)
+    let zombieSpeedIncrease = 0; // Used to increase zombie movement speed over time
+	let zombiesKilled = 0;
+	let spawnIntervalId;
+	let zombiesOnMap = 0;
+
+    const keys = { up: false, down: false, left: false, right: false };
+    const bulletSpeed = 10;
+    let lastShootTime = 0;
+    let lastDirection = 'up';
+    let shooting = false;
+	let healthBeforePause = 0;
+	let maxZombiesOnMap = 20;
+
+    // Upgrade Effects
+    let speedUpgradeLevel = 0;
+    let shootUpgradeLevel = 0;
+    let damageUpgradeLevel = 0;
+    let hasHealing = false;
+	let healingLVL = 0;
+	let zombspeedLevel = 0;
+	
+	let isGamePaused = false;
+    let gameLoopId; // Store the loop ID for cancellationn
+	let playerName = prompt("Enter your name:") || "Player";  // Prompt the user for their name, default to "Player" if canceled or empty
+	let zombieAnimationFrames = []; // Array to hold the zombie animation frame IDs
+	let zombies = [];  // Array to store zombies
+	let bullets = document.querySelectorAll('.bullet');
+
+
+
+if (playerName === "SuperTina") {
+  playerHealth = 300;
+  speed = 7;
+  score = 5000;
+  square.style.backgroundColor = "pink"; 
+  //shoots yellow bullets   
+  }
+  
+ if (playerName === "nigger" || playerName === "nigga") {
+  square.style.backgroundColor = "black"; 
+  }
+  
+ if (playerName === "goku") {
+  square.style.backgroundColor = "orange";  
+  //spawns pregnant gokus instead of zombies
+  }
+  
+  if (playerName === "feminist") {
+  spawnInterval = 20; 
+  maxZombiesOnMap = 200;
+  //spawns angry liberals
+  }
+
+
+    // Update position of the square
+    function moveSquare() {
+      if (keys.up) squareY -= speed;
+      if (keys.down) squareY += speed;
+      if (keys.left) squareX -= speed;
+      if (keys.right) squareX += speed;
+
+      square.style.left = squareX + 'px';
+      square.style.top = squareY + 'px';
+    }
+
+    // Keydown event to start moving or shooting
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'z') keys.up = true;
+      if (event.key === 's') keys.down = true;
+      if (event.key === 'q') keys.left = true;
+      if (event.key === 'd') keys.right = true;
+
+      // Shooting with arrow keys and storing the direction
+      if (event.key === 'ArrowUp') {
+        lastDirection = 'up';
+        shooting = true;
+      }
+      if (event.key === 'ArrowDown') {
+        lastDirection = 'down';
+        shooting = true;
+      }
+      if (event.key === 'ArrowLeft') {
+        lastDirection = 'left';
+        shooting = true;
+      }
+      if (event.key === 'ArrowRight') {
+        lastDirection = 'right';
+        shooting = true;
+      }
+    });
+
+    // Keyup event to stop moving
+    document.addEventListener('keyup', function(event) {
+      if (event.key === 'z') keys.up = false;
+      if (event.key === 's') keys.down = false;
+      if (event.key === 'q') keys.left = false;
+      if (event.key === 'd') keys.right = false;
+
+      // Stop shooting when the key is released
+      if (
+        event.key === 'ArrowUp' ||
+        event.key === 'ArrowDown' ||
+        event.key === 'ArrowLeft' ||
+        event.key === 'ArrowRight'
+      ) {
+        shooting = false;
+      }
+    });
+	
+	    // Open/Close upgrade menu on 'E' key press
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'e') {
+        upgradeMenu.style.display = upgradeMenu.style.display === 'none' || upgradeMenu.style.display === '' ? 'block' : 'none';
+      }
+    });
+	
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'k') {
+        spawnBigZombie();
+      }
+    });
+	
+    // Upgrade Functions
+// Speed Upgrade
+speedUpgradeButton.addEventListener('click', () => {
+  if (score >= 100) { // Check if player has enough coins
+    speed += 1; // Increase speed
+    speedUpgradeLevel += 1;
+    speedUpgradeButton.disabled = speedUpgradeLevel >= 5; // Limit to 5 upgrades
+    score -= 100; // Deduct coins only if the player can afford it
+  }
+});
+
+// Shoot Upgrade
+shootUpgradeButton.addEventListener('click', () => {
+  if (score >= 200) { // Check if player has enough coins
+    shootCooldown = Math.max(20, shootCooldown - 25); // Decrease cooldown, minimum 100ms
+    shootUpgradeLevel += 1;
+    shootUpgradeButton.disabled = shootUpgradeLevel >= 20; // Limit to 5 upgrades
+    score -= 200; // Deduct coins only if the player can afford it
+  }
+});
+
+// Damage Upgrade
+damageUpgradeButton.addEventListener('click', () => {
+  if (score >= 200) { // Check if player has enough coins
+    damage += 1; // Increase damage
+    damageUpgradeLevel += 0.5;
+    damageUpgradeButton.disabled = damageUpgradeLevel >= 5; // Limit to 5 upgrades
+    score -= 200; // Deduct coins only if the player can afford it
+  }
+});
+
+// Health Upgrade
+healthUpgradeButton.addEventListener('click', () => {
+  if (score >= 500) { // Check if player has enough coins
+    hasHealing = true;
+    healingLVL += 2;
+    regenerateHealth();
+    score -= 500; // Deduct coins only if the player can afford it
+  }
+});
+
+// Zombie Speed Upgrade
+zombspeedUpgradeButton.addEventListener('click', () => {
+  if (score >= 50) { // Check if player has enough coins
+    zombieSpeedIncrease -= 1;
+    score -= 50; // Deduct coins only if the player can afford it
+  }
+});
+
+// Function to shoot a bullet in the last shooting direction
+function shootBullet(direction) {
+      const currentTime = Date.now();
+      if (currentTime - lastShootTime < shootCooldown) {
+        return;  // Ignore the shot if the cooldown hasn't passed
+      }
+      lastShootTime = currentTime;  // Update the last shot time
+
+      const bullet = document.createElement('div');
+      bullet.classList.add('bullet');
+      bullet.style.top = squareY + 15 + 'px';  // Adjust to the center of the square
+      bullet.style.left = squareX + 15 + 'px'; // Adjust to the center of the square
+
+      document.body.appendChild(bullet);
+	  
+
+      const bulletMovement = () => {
+        if (direction === 'up') {
+          bullet.style.top = parseInt(bullet.style.top) - bulletSpeed + 'px';
+        } else if (direction === 'down') {
+          bullet.style.top = parseInt(bullet.style.top) + bulletSpeed + 'px';
+        } else if (direction === 'left') {
+          bullet.style.left = parseInt(bullet.style.left) - bulletSpeed + 'px';
+        } else if (direction === 'right') {
+          bullet.style.left = parseInt(bullet.style.left) + bulletSpeed + 'px';
+        }
+		if (playerName === "SuperTina") {
+		bullet.style.backgroundColor = "Yellow";
+		}
+
+        // Check for collisions with zombies
+        checkBulletCollision(bullet);
+
+        // Remove bullet if it goes off screen
+        if (
+          parseInt(bullet.style.top) < 0 || 
+          parseInt(bullet.style.top) > window.innerHeight || 
+          parseInt(bullet.style.left) < 0 || 
+          parseInt(bullet.style.left) > window.innerWidth
+        ) {
+          document.body.removeChild(bullet);
+        } else {
+          requestAnimationFrame(bulletMovement);
+        }
+      };
+
+      bulletMovement(); // Start bullet movement
+    }
+	
+// Check if a bullet collides with any zombies
+function checkBulletCollision(bullet) {
+  const zombies = document.querySelectorAll('.zombie, .bigZombie'); // Include big zombies in the selection
+  zombies.forEach(zombie => {
+    const zombieRect = zombie.getBoundingClientRect();
+    const bulletRect = bullet.getBoundingClientRect();
+
+    if (bulletRect.top < zombieRect.bottom &&
+        bulletRect.bottom > zombieRect.top &&
+        bulletRect.left < zombieRect.right &&
+        bulletRect.right > zombieRect.left) {
+      
+      // Bullet hit the zombie, decrease health
+      const zombieHealth = zombie.getAttribute('data-health');
+      const newHealth = zombieHealth - damage; // Apply damage upgrade
+
+      if (newHealth <= 0) {
+        // Zombie dies
+        document.body.removeChild(zombie);
+        score += 20; // Increase score when zombie dies
+        zombiesKilled += 1;
+		zombiesOnMap -= 1;
+      } else {
+        // Update health attribute
+        zombie.setAttribute('data-health', newHealth);
+      }
+
+      // Remove bullet after collision
+      document.body.removeChild(bullet);
+    }
+  });
+}
+
+// Update the health bar to reflect the player's health
+function updateHealthBar() {
+      const healthPercentage = playerHealth / maxHealth * 100;
+      healthBar.style.width = healthPercentage + '%';
+    }
+
+// Regenerate health over time
+function regenerateHealth() {
+  if (hasHealing && playerHealth < maxHealth) {
+    playerHealth += healingLVL; 
+    updateHealthBar();  
+  }
+}
+setInterval(regenerateHealth, 2000);  
+
+// Function to increase wave (faster zombies)
+function increaseWave() {
+spawnInterval = Math.max(200, spawnInterval - 50); // Decrease spawn interval, but not below 1 second
+  wave++;
+  waveDisplay.innerText = `Wave: ${wave}`;
+
+  // Decrease spawn interval (faster zombie spawns)
+  zombieSpeedIncrease += 0.05
+  // Clear the current interval and restart with the updated spawnInterval
+  clearInterval(spawnIntervalId);
+
+  // Set a new interval with the updated spawnInterval
+  spawnIntervalId = setInterval(() => {
+    spawnZombie();
+  }, spawnInterval);
+}
+
+// Zombie spawn function
+function spawnZombie() {
+if (zombiesOnMap < maxZombiesOnMap) {
+  const zombie = document.createElement('div');
+  zombiesOnMap += 1;
+  if (playerName === "goku") {
+  spawnBigZombie();
+  } else {
+  zombie.classList.add('zombie');
+  zombie.setAttribute('data-health', 3); // Initial health of 3
+
+  // Randomly place zombie at one of the screen's edges
+  const edge = Math.floor(Math.random() * 4); // 0: top, 1: bottom, 2: left, 3: right
+  let zombieX, zombieY;
+
+  if (edge === 0) {
+    zombieX = Math.random() * window.innerWidth;
+    zombieY = 0;  // Top edge
+  } else if (edge === 1) {
+    zombieX = Math.random() * window.innerWidth;
+    zombieY = window.innerHeight;  // Bottom edge
+  } else if (edge === 2) {
+    zombieX = 0;  // Left edge
+    zombieY = Math.random() * window.innerHeight;
+  } else {
+    zombieX = window.innerWidth;  // Right edge
+    zombieY = Math.random() * window.innerHeight;
+  }
+
+  zombie.style.left = zombieX + 'px';
+  zombie.style.top = zombieY + 'px';
+  document.body.appendChild(zombie);
+
+  // Add the zombie to the zombies array for later movement tracking
+  zombies.push({ element: zombie, x: zombieX, y: zombieY });
+}
+}
+}
+
+// Zombie movement function
+function moveZombie(zombieObj) {
+  const zombie = zombieObj.element;
+  const zombieX = zombieObj.x;
+  const zombieY = zombieObj.y;
+  
+  const dx = squareX - zombieX;
+  const dy = squareY - zombieY;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+
+  // If the zombie is big, reduce its speed by a factor (e.g., 1.5x slower)
+  const speedFactor = zombieObj.isBig ? 3 : 1;
+
+  // Normalize movement towards the player (adjust speed)
+  const moveX = dx / distance * (2 + zombieSpeedIncrease) / speedFactor;
+  const moveY = dy / distance * (2 + zombieSpeedIncrease) / speedFactor;
+
+  zombieObj.x += moveX;
+  zombieObj.y += moveY;
+
+  zombie.style.left = zombieObj.x + 'px';
+  zombie.style.top = zombieObj.y + 'px';
+
+  // Check for collision with player
+  checkZombieCollision(zombie);
+}
+
+// Check if a zombie collides with the player
+function checkZombieCollision(zombie) {
+  const zombieRect = zombie.getBoundingClientRect();
+  const playerRect = square.getBoundingClientRect();
+
+  // Check for collision using bounding rectangles
+  if (
+    zombieRect.top < playerRect.bottom &&
+    zombieRect.bottom > playerRect.top &&
+    zombieRect.left < playerRect.right &&
+    zombieRect.right > playerRect.left
+  ) {
+    // Player gets hit by the zombie
+    playerHealth -= 10; // Decrease health by 10 when hit
+    updateHealthBar();
+
+    // Check if player health is 0 or below
+    if (playerHealth <= 0) {
+      endGame(); // End the game if health is 0 or below
+    }
+
+    // Remove the zombie after collision
+    document.body.removeChild(zombie);
+	zombiesOnMap -= 1;
+  }
+}
+
+
+// Display player's name above the square
+function displayPlayerName() {
+  const playerNameDiv = document.getElementById('playerName');
+  playerNameDiv.innerText = playerName; // Set the player's name
+  playerNameDiv.style.position = 'absolute'; // Position it absolutely
+  playerNameDiv.style.left = squareX + 'px'; // Set the X position of the name slightly to the right of the square
+  playerNameDiv.style.top = squareY - 20 + 'px'; // Set the Y position slightly above the square
+}
+	
+// Function to stop the game
+function endGame() {
+  // Clear the spawn interval so zombies stop spawning
+  clearInterval(spawnIntervalId);
+
+  // Stop any other game loops or animations (e.g., zombies moving)
+  cancelAnimationFrame(gameLoopId);
+
+  // Display Game Over message
+  const gameOverMessage = document.createElement('div');
+  gameOverMessage.innerText = "You died lol";
+  gameOverMessage.style.position = 'fixed';
+  gameOverMessage.style.top = '50%';
+  gameOverMessage.style.left = '50%';
+  gameOverMessage.style.transform = 'translate(-50%, -50%)';
+  gameOverMessage.style.fontSize = '48px';
+  gameOverMessage.style.color = 'Darkred';
+  document.body.appendChild(gameOverMessage);
+}
+
+
+// Function to spawn a big zombie
+function spawnBigZombie() {
+  const bigZombie = document.createElement('div');
+  bigZombie.classList.add('bigZombie');
+  bigZombie.setAttribute('data-health', 20); // Assign more health to big zombie (e.g., 20)
+
+  // Randomly place the big zombie at one of the screen's edges
+  const edge = Math.floor(Math.random() * 4); // 0: top, 1: bottom, 2: left, 3: right
+  let zombieX, zombieY;
+
+  if (edge === 0) {
+    zombieX = Math.random() * window.innerWidth;
+    zombieY = 0;  // Top edge
+  } else if (edge === 1) {
+    zombieX = Math.random() * window.innerWidth;
+    zombieY = window.innerHeight;  // Bottom edge
+  } else if (edge === 2) {
+    zombieX = 0;  // Left edge
+    zombieY = Math.random() * window.innerHeight;
+  } else {
+    zombieX = window.innerWidth;  // Right edge
+    zombieY = Math.random() * window.innerHeight;
+  }
+
+  bigZombie.style.left = zombieX + 'px';
+  bigZombie.style.top = zombieY + 'px';
+  document.body.appendChild(bigZombie);
+
+  // Add the big zombie to the zombies array for later movement tracking
+  zombies.push({ element: bigZombie, x: zombieX, y: zombieY, isBig: true });
+}
+
+// Game loop to continuously update movement and shooting
+function gameLoop() {
+  // If player health is 0 or less, end the game
+  if (playerHealth <= 0) {
+    endGame(); // Call the function to stop the game
+    return; // Stop further game updates
+  }
+
+  moveSquare();
+  if (shooting) {
+    shootBullet(lastDirection);
+  }
+  scoreDisplay.innerText = score;
+
+  // Check for wave increase after certain time
+  if (zombiesKilled >= wave * 10) {
+    increaseWave();
+  }
+
+  // Move all zombies
+  zombies.forEach(zombieObj => moveZombie(zombieObj));
+
+  displayPlayerName();
+
+  gameLoopId = requestAnimationFrame(gameLoop);  // Loop for continuous movement
+}
+
+function pauseGame() {
+  if (isGamePaused) return; // Don't pause if already paused
+  healthBeforePause = playerHealth;
+
+  // Pause the game loop
+  cancelAnimationFrame(gameLoopId);
+  cancelAnimationFrame(moveZombie);
+
+  // Stop the zombie spawning
+  clearInterval(spawnIntervalId);
+
+  // Cancel all running zombie animations (movement)
+  zombieAnimationFrames.forEach(id => cancelAnimationFrame(id));
+  zombieAnimationFrames = []; // Clear the array after cancelling the frames
+
+  // Set the game as paused
+  isGamePaused = true;
+  playerHealth = 100;
+}
+
+function resumeGame() {
+  if (!isGamePaused) return; // Don't resume if already running
+  healthDuringPause = playerHealth;
+
+  // Resume the game loop
+  gameLoop(); // Start the game loop again
+
+  // Resume zombie spawning
+  spawnIntervalId = setInterval(() => {
+    spawnZombie();
+  }, spawnInterval);
+
+  // Restart zombie movements
+  zombies.forEach(zombie => moveZombie(zombie));
+
+  // Set the game as resumed
+  isGamePaused = false;
+  playerHealth = healthBeforePause;
+  updateHealthBar();
+}
+
+
+// Listen for the 'p' key to toggle pause/resume
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'p') {
+    if (isGamePaused) {
+      resumeGame();
+    } else {
+      pauseGame();
+    }
+  }
+});
+
+
+	
+    gameLoop();  // Start the movement loop
+  </script>
+</body>
+</html>
