@@ -150,7 +150,7 @@ h3 {
   <h1 id="titleGame">Tiny zombie survival</h1>
   <h3>V0.7</h3>
 </div>
-<h5 id="startIN">press P twice to start<br>press E to open upgrades<br>press p to pause</h5>
+<h5 id="startIN">press P twice to start<br>press E to open upgrades<br>press p to pause<br>@paxxa.be on discord</h5>
 
   <!-- Health Bar HTML -->
   <div id="healthBarContainer">
@@ -199,7 +199,7 @@ h3 {
 	let zombiesOnMap = 0;
 
     const keys = { up: false, down: false, left: false, right: false };
-    const bulletSpeed = 10;
+    let bulletSpeed = 10;
     let lastShootTime = 0;
     let lastDirection = 'up';
     let shooting = false;
@@ -244,6 +244,21 @@ if (playerName === "SuperTina") {
   spawnInterval = 20; 
   maxZombiesOnMap = 200;
   //spawns angry liberals
+  }
+  
+   if (playerName === "flash" || playerName === "Flash") {
+  square.style.backgroundColor = "DarkRed";  
+  speed = 12;
+  bulletSpeed = 17;
+  }
+  
+  if (playerName === "zombie" || playerName === "Zombie") {
+  square.style.backgroundColor = "green";  
+  zombieSpeedIncrease = -2;
+  }
+  
+    if (playerName === "corpse") {
+    playerHealth = 0;
   }
 
 
@@ -480,7 +495,7 @@ spawnInterval = Math.max(200, spawnInterval - 50); // Decrease spawn interval, b
 
 // Zombie spawn function
 function spawnZombie() {
-if (zombiesOnMap < maxZombiesOnMap) {
+if (zombiesOnMap <= maxZombiesOnMap) {
   const zombie = document.createElement('div');
   zombiesOnMap += 1;
   if (playerName === "goku") {
